@@ -70,15 +70,20 @@ ${selectedOffersMarkup}
 }
 
 export default class PointView extends View {
+  #favoriteClickHandler = null;
+
   #rollupClickHandler = null;
+
+  #favoriteButtonListenerAttached = false;
 
   #rollupButtonListenerAttached = false;
 
-  constructor({ point, destination, offers, onRollupClick = () => {} } = {}) {
+  constructor({ point, destination, offers, onFavoriteClick = () => {}, onRollupClick = () => {} } = {}) {
     super();
     this.point = point;
     this.destination = destination;
     this.offers = offers ?? [];
+    this.#favoriteClickHandler = onFavoriteClick;
     this.#rollupClickHandler = onRollupClick;
   }
 
@@ -88,6 +93,11 @@ export default class PointView extends View {
 
   getElement() {
     const element = super.getElement();
+
+    if (!this.#favoriteButtonListenerAttached) {
+      element.querySelector('.event__favorite-btn').addEventListener('click', this.#favoriteClickHandler);
+      this.#favoriteButtonListenerAttached = true;
+    }
 
     if (!this.#rollupButtonListenerAttached) {
       element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
@@ -99,6 +109,7 @@ export default class PointView extends View {
 
   removeElement() {
     super.removeElement();
+    this.#favoriteButtonListenerAttached = false;
     this.#rollupButtonListenerAttached = false;
   }
 }

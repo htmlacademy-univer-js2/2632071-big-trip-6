@@ -9,29 +9,17 @@ const Mode = {
 
 export default class PointPresenter {
   #point = null;
-
   #destination = null;
-
   #offers = null;
-
   #editOffers = null;
-
   #destinations = null;
-
   #pointTypes = null;
-
   #container = null;
-
   #onDataChange = null;
-
   #onModeChange = null;
-
   #pointView = null;
-
   #pointEditView = null;
-
   #mode = Mode.DEFAULT;
-
   #editKeyDownHandler = null;
 
   constructor({ point, destination, offers, editOffers, destinations, pointTypes, container, onDataChange = () => {}, onModeChange = () => {} }) {

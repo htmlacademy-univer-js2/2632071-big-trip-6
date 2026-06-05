@@ -71,11 +71,8 @@ ${selectedOffersMarkup}
 
 export default class PointView extends View {
   #favoriteClickHandler = null;
-
   #rollupClickHandler = null;
-
   #favoriteButtonListenerAttached = false;
-
   #rollupButtonListenerAttached = false;
 
   constructor({ point, destination, offers, onFavoriteClick = () => {}, onRollupClick = () => {} } = {}) {

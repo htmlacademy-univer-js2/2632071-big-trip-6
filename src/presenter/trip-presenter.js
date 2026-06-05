@@ -136,7 +136,7 @@ export default class TripPresenter {
         point,
         destination: this.model.getDestinationById(point.destinationId),
         offers: this.model.getOffersByIds(point.offerIds),
-        editOffers: this.model.getOffersByType(point.type),
+        editOffers: this.model.getOffers(),
         destinations: this.#destinations,
         pointTypes: this.#pointTypes,
         container: this.eventListComponent.getElement(),

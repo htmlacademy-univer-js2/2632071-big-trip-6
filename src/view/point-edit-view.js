@@ -1,5 +1,9 @@
 import AbstractStatefulView from './abstract-stateful-view.js';
 import { createPointFormTemplate } from './point-form-template.js';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+
+const DATE_FORMAT = 'd/m/y H:i';
 
 export default class PointEditView extends AbstractStatefulView {
   #submitHandler = null;
@@ -7,6 +11,8 @@ export default class PointEditView extends AbstractStatefulView {
   #typeChangeHandler = null;
   #destinationChangeHandler = null;
   #offerChangeHandler = null;
+  #startDatepicker = null;
+  #endDatepicker = null;
 
   constructor({ point, destination, destinations, offers, selectedOfferIds, pointTypes, onFormSubmit = () => {}, onRollupClick = () => {} } = {}) {
     super();
@@ -43,6 +49,18 @@ export default class PointEditView extends AbstractStatefulView {
     this._element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
     this._element.querySelectorAll('.event__type-input').forEach((input) => input.addEventListener('change', this.#typeChangeHandler));
     this._element.querySelectorAll('.event__offer-checkbox').forEach((input) => input.addEventListener('change', this.#offerChangeHandler));
+
+    this.#setDatepickers();
+  }
+
+  updateElement(update) {
+    this.#destroyDatepickers();
+    super.updateElement(update);
+  }
+
+  removeElement() {
+    this.#destroyDatepickers();
+    super.removeElement();
   }
 
   #handleTypeChange = (event) => {
@@ -79,4 +97,32 @@ export default class PointEditView extends AbstractStatefulView {
       selectedOfferIds: this.selectedOfferIds,
     });
   };
+
+  #setDatepickers() {
+    const startDateInput = this._element.querySelector('.event__input--time[name="event-start-time"]');
+    const endDateInput = this._element.querySelector('.event__input--time[name="event-end-time"]');
+
+    this.#startDatepicker = flatpickr(startDateInput, {
+      dateFormat: DATE_FORMAT,
+      defaultDate: this.point.dateFrom,
+      enableTime: true,
+      'time_24hr': true,
+      allowInput: true,
+    });
+
+    this.#endDatepicker = flatpickr(endDateInput, {
+      dateFormat: DATE_FORMAT,
+      defaultDate: this.point.dateTo,
+      enableTime: true,
+      'time_24hr': true,
+      allowInput: true,
+    });
+  }
+
+  #destroyDatepickers() {
+    this.#startDatepicker?.destroy();
+    this.#endDatepicker?.destroy();
+    this.#startDatepicker = null;
+    this.#endDatepicker = null;
+  }
 }

@@ -1,4 +1,34 @@
+import dayjs from 'dayjs';
 import { createMockData } from './mock-data.js';
+
+const FILTER_TYPES = [
+  { type: 'everything', label: 'Everything' },
+  { type: 'future', label: 'Future' },
+  { type: 'present', label: 'Present' },
+  { type: 'past', label: 'Past' },
+];
+
+function getFilterCount(points, type) {
+  if (type === 'everything') {
+    return points.length;
+  }
+
+  const now = dayjs();
+
+  return points.filter((point) => {
+    const pointDate = dayjs(point.dateFrom);
+
+    if (type === 'future') {
+      return pointDate.isAfter(now, 'day');
+    }
+
+    if (type === 'present') {
+      return pointDate.isSame(now, 'day');
+    }
+
+    return pointDate.isBefore(now, 'day');
+  }).length;
+}
 
 export default class Model {
   constructor() {
@@ -24,6 +54,20 @@ export default class Model {
 
   getOffers() {
     return this.offers;
+  }
+
+  getFilters() {
+    return FILTER_TYPES.map(({ type, label }) => {
+      const count = getFilterCount(this.points, type);
+
+      return {
+        type,
+        label,
+        count,
+        isChecked: type === 'everything',
+        isDisabled: type !== 'everything' && count === 0,
+      };
+    });
   }
 
   getPointById(pointId) {

@@ -1,8 +1,9 @@
-import { createElement } from '../render.js';
-import { createPointFormTemplate } from './point_form_template.js';
+import View from './view.js';
+import { createPointFormTemplate } from './point-form-template.js';
 
-export default class CreationFormView {
+export default class CreationFormView extends View {
   constructor({ point, destination, destinations, offers, selectedOfferIds, pointTypes } = {}) {
+    super();
     this.point = point;
     this.destination = destination;
     this.destinations = destinations ?? [];
@@ -11,7 +12,7 @@ export default class CreationFormView {
     this.pointTypes = pointTypes ?? [];
   }
 
-  getTemplate() {
+  get template() {
     return createPointFormTemplate({
       point: this.point,
       destination: this.destination,
@@ -23,16 +24,5 @@ export default class CreationFormView {
       resetLabel: 'Cancel',
       isCreation: true,
     });
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
   }
 }

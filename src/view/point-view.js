@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { createElement } from '../render.js';
+import View from './view.js';
 
 function capitalize(value) {
   if (!value) {
@@ -69,25 +69,36 @@ ${selectedOffersMarkup}
   );
 }
 
-export default class PointView {
-  constructor({ point, destination, offers } = {}) {
+export default class PointView extends View {
+  #rollupClickHandler = null;
+
+  #rollupButtonListenerAttached = false;
+
+  constructor({ point, destination, offers, onRollupClick = () => {} } = {}) {
+    super();
     this.point = point;
     this.destination = destination;
     this.offers = offers ?? [];
+    this.#rollupClickHandler = onRollupClick;
   }
 
-  getTemplate() {
+  get template() {
     return createPointTemplate(this.point, this.destination, this.offers);
   }
 
   getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
+    const element = super.getElement();
+
+    if (!this.#rollupButtonListenerAttached) {
+      element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
+      this.#rollupButtonListenerAttached = true;
     }
-    return this.element;
+
+    return element;
   }
 
   removeElement() {
-    this.element = null;
+    super.removeElement();
+    this.#rollupButtonListenerAttached = false;
   }
 }

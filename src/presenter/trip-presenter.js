@@ -3,7 +3,6 @@ import SortView from '../view/sort-view.js';
 import EventListView from '../view/event-list-view.js';
 import PointView from '../view/point-view.js';
 import PointEditView from '../view/point-edit-view.js';
-import CreationFormView from '../view/creation-form-view.js';
 import { render } from '../render.js';
 
 export default class TripPresenter {
@@ -11,10 +10,42 @@ export default class TripPresenter {
   sortComponent = new SortView();
   eventListComponent = new EventListView();
 
+  #pointView = null;
+  #pointEditView = null;
+  #editKeyDownHandler = null;
+
   constructor({ container, model }) {
     this.container = container;
     this.model = model;
     this.filterContainer = document.querySelector('.trip-controls__filters');
+  }
+
+  #handlePointClick = () => {
+    this.#pointView.getElement().replaceWith(this.#pointEditView.getElement());
+    document.addEventListener('keydown', this.#editKeyDownHandler);
+  };
+
+  #handleFormSubmit = (event) => {
+    event.preventDefault();
+    this.#closeEditForm();
+  };
+
+  #handleFormRollupClick = () => {
+    this.#closeEditForm();
+  };
+
+  #handleEditFormKeyDown = (event) => {
+    if (event.key !== 'Escape') {
+      return;
+    }
+
+    event.preventDefault();
+    this.#closeEditForm();
+  };
+
+  #closeEditForm() {
+    this.#pointEditView.getElement().replaceWith(this.#pointView.getElement());
+    document.removeEventListener('keydown', this.#editKeyDownHandler);
   }
 
   init() {
@@ -29,32 +60,31 @@ export default class TripPresenter {
     const firstPoint = points[0] ?? null;
     const firstPointDestination = firstPoint ? this.model.getDestinationById(firstPoint.destinationId) : null;
 
-    render(new PointEditView({
-      point: firstPoint,
-      destination: firstPointDestination,
-      destinations,
-      offers: firstPoint ? this.model.getOffersByType(firstPoint.type) : [],
-      selectedOfferIds: firstPoint?.offerIds ?? [],
-      pointTypes,
-    }), this.eventListComponent.getElement());
+    if (firstPoint) {
+      this.#editKeyDownHandler = this.#handleEditFormKeyDown;
 
-    render(new CreationFormView({
-      point: {
-        type: pointTypes[0] ?? '',
-        destinationId: '',
-        offerIds: [],
-        dateFrom: '',
-        dateTo: '',
-        basePrice: '',
-      },
-      destination: null,
-      destinations,
-      offers: pointTypes[0] ? this.model.getOffersByType(pointTypes[0]) : [],
-      selectedOfferIds: [],
-      pointTypes,
-    }), this.eventListComponent.getElement());
+      this.#pointView = new PointView({
+        point: firstPoint,
+        destination: firstPointDestination,
+        offers: this.model.getOffersByIds(firstPoint.offerIds),
+        onRollupClick: this.#handlePointClick,
+      });
 
-    points.forEach((point) => {
+      this.#pointEditView = new PointEditView({
+        point: firstPoint,
+        destination: firstPointDestination,
+        destinations,
+        offers: this.model.getOffersByType(firstPoint.type),
+        selectedOfferIds: firstPoint.offerIds,
+        pointTypes,
+        onFormSubmit: this.#handleFormSubmit,
+        onRollupClick: this.#handleFormRollupClick,
+      });
+
+      render(this.#pointView, this.eventListComponent.getElement());
+    }
+
+    points.slice(1).forEach((point) => {
       render(new PointView({
         point,
         destination: this.model.getDestinationById(point.destinationId),

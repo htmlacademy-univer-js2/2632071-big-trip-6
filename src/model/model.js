@@ -74,6 +74,10 @@ export default class Model {
     return this.points.find((point) => point.id === pointId) ?? null;
   }
 
+  updatePoint(updatedPoint) {
+    this.points = this.points.map((point) => (point.id === updatedPoint.id ? updatedPoint : point));
+  }
+
   getDestinationById(destinationId) {
     return this.destinations.find((destination) => destination.id === destinationId) ?? null;
   }

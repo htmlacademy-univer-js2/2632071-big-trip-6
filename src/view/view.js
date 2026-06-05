@@ -7,7 +7,7 @@ export default class View {
     throw new Error('Abstract method not implemented: template');
   }
   
-    getElement() {
+getElement() {
     if (!this.#element) {
       this.#element = createElement(this.template);
     }

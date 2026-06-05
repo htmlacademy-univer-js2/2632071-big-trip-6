@@ -5,6 +5,29 @@ import EmptyListView from '../view/empty-list-view.js';
 import PointPresenter from './point-presenter.js';
 import { render } from '../render.js';
 
+const SortType = {
+  DAY: 'day',
+  EVENT: 'event',
+  TIME: 'time',
+  PRICE: 'price',
+  OFFER: 'offer',
+};
+
+function sortByDay(firstPoint, secondPoint) {
+  return new Date(firstPoint.dateFrom) - new Date(secondPoint.dateFrom);
+}
+
+function sortByTime(firstPoint, secondPoint) {
+  const firstDuration = new Date(firstPoint.dateTo) - new Date(firstPoint.dateFrom);
+  const secondDuration = new Date(secondPoint.dateTo) - new Date(secondPoint.dateFrom);
+
+  return secondDuration - firstDuration;
+}
+
+function sortByPrice(firstPoint, secondPoint) {
+  return secondPoint.basePrice - firstPoint.basePrice;
+}
+
 export default class TripPresenter {
   filterComponent = null;
 
@@ -15,6 +38,12 @@ export default class TripPresenter {
   emptyListComponent = null;
 
   #pointPresenters = new Map();
+
+  #currentSortType = SortType.DAY;
+
+  #pointTypes = [];
+
+  #destinations = [];
 
   constructor({ container, model }) {
     this.container = container;
@@ -34,18 +63,21 @@ export default class TripPresenter {
   init() {
     const points = this.model.getPoints();
     const filters = this.model.getFilters();
-    const pointTypes = this.model.getPointTypes();
-    const destinations = this.model.getDestinations();
+    this.#pointTypes = this.model.getPointTypes();
+    this.#destinations = this.model.getDestinations();
     const sortOptions = [
-      { type: 'day', label: 'Day', isChecked: true, isDisabled: false },
-      { type: 'event', label: 'Event', isChecked: false, isDisabled: true },
-      { type: 'time', label: 'Time', isChecked: false, isDisabled: false },
-      { type: 'price', label: 'Price', isChecked: false, isDisabled: false },
-      { type: 'offer', label: 'Offers', isChecked: false, isDisabled: true },
+      { type: SortType.DAY, label: 'Day', isChecked: this.#currentSortType === SortType.DAY, isDisabled: false },
+      { type: SortType.EVENT, label: 'Event', isChecked: this.#currentSortType === SortType.EVENT, isDisabled: true },
+      { type: SortType.TIME, label: 'Time', isChecked: this.#currentSortType === SortType.TIME, isDisabled: false },
+      { type: SortType.PRICE, label: 'Price', isChecked: this.#currentSortType === SortType.PRICE, isDisabled: false },
+      { type: SortType.OFFER, label: 'Offers', isChecked: this.#currentSortType === SortType.OFFER, isDisabled: true },
     ];
 
     this.filterComponent = new FilterView({ filters });
-    this.sortComponent = new SortView({ sortOptions });
+    this.sortComponent = new SortView({
+      sortOptions,
+      onSortTypeChange: this.#handleSortTypeChange,
+    });
     this.eventListComponent = new EventListView();
     this.emptyListComponent = new EmptyListView();
 
@@ -60,14 +92,53 @@ export default class TripPresenter {
     render(this.sortComponent, this.container);
     render(this.eventListComponent, this.container);
 
-    points.forEach((point) => {
+    this.#renderPoints(points);
+  }
+
+  #handleSortTypeChange = (sortType) => {
+    if (this.#currentSortType === sortType) {
+      return;
+    }
+
+    this.#currentSortType = sortType;
+    this.#renderPoints(this.model.getPoints());
+  };
+
+  #getSortedPoints(points) {
+    const sortedPoints = [...points];
+
+    if (this.#currentSortType === SortType.TIME) {
+      sortedPoints.sort(sortByTime);
+
+      return sortedPoints;
+    }
+
+    if (this.#currentSortType === SortType.PRICE) {
+      sortedPoints.sort(sortByPrice);
+
+      return sortedPoints;
+    }
+
+    sortedPoints.sort(sortByDay);
+
+    return sortedPoints;
+  }
+
+  #renderPoints(points) {
+    const sortedPoints = this.#getSortedPoints(points);
+
+    this.#resetPointPresenters();
+    this.#pointPresenters = new Map();
+    this.eventListComponent.getElement().innerHTML = '';
+
+    sortedPoints.forEach((point) => {
       const pointPresenter = new PointPresenter({
         point,
         destination: this.model.getDestinationById(point.destinationId),
         offers: this.model.getOffersByIds(point.offerIds),
         editOffers: this.model.getOffersByType(point.type),
-        destinations,
-        pointTypes,
+        destinations: this.#destinations,
+        pointTypes: this.#pointTypes,
         container: this.eventListComponent.getElement(),
         onDataChange: this.#handlePointDataChange,
         onModeChange: this.#handlePointModeChange,

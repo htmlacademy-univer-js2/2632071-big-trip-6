@@ -13,9 +13,7 @@ ${sortOptions.map((sortOption) => `      <div class="trip-sort__item  trip-sort_
 
 export default class SortView extends View {
   #sortTypeChangeHandler = null;
-
   #sortClickHandler = null;
-
   #listenerAttached = false;
 
   constructor({ sortOptions, onSortTypeChange = () => {} } = {}) {

@@ -51,6 +51,10 @@ function renderAvailableOffers(offers, selectedOfferIds, idPrefix) {
               </div>`).join('');
 }
 
+function renderOffersForType(offers, type, selectedOfferIds, idPrefix) {
+  return renderAvailableOffers(offers.filter((offer) => offer.type === type), selectedOfferIds, idPrefix);
+}
+
 function renderDestinationPhotos(destination) {
   const pictures = destination?.pictures ?? [];
 
@@ -134,7 +138,7 @@ ${renderDestinationOptions(destinations)}
           <section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">
-${renderAvailableOffers(offers, selectedOfferIds, formId)}
+${renderOffersForType(offers, normalizedPoint.type, selectedOfferIds, formId)}
             </div>
           </section>
           <section class="event__section  event__section--destination">

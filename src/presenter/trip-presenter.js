@@ -3,13 +3,14 @@ import SortView from '../view/sort-view.js';
 import EventListView from '../view/event-list-view.js';
 import PointView from '../view/point-view.js';
 import PointEditView from '../view/point-edit-view.js';
+import EmptyListView from '../view/empty-list-view.js';
 import { render } from '../render.js';
 
 export default class TripPresenter {
-  filterComponent = new FilterView();
-  sortComponent = new SortView();
-  eventListComponent = new EventListView();
-
+  filterComponent = null;
+  sortComponent = null;
+  eventListComponent = null;
+  emptyListComponent = null;
   #pointView = null;
   #pointEditView = null;
   #editKeyDownHandler = null;
@@ -50,10 +51,30 @@ export default class TripPresenter {
 
   init() {
     const points = this.model.getPoints();
+    const filters = this.model.getFilters();
     const pointTypes = this.model.getPointTypes();
     const destinations = this.model.getDestinations();
+    const sortOptions = [
+      { type: 'day', label: 'Day', isChecked: true, isDisabled: false },
+      { type: 'event', label: 'Event', isChecked: false, isDisabled: true },
+      { type: 'time', label: 'Time', isChecked: false, isDisabled: false },
+      { type: 'price', label: 'Price', isChecked: false, isDisabled: false },
+      { type: 'offer', label: 'Offers', isChecked: false, isDisabled: true },
+    ];
+
+    this.filterComponent = new FilterView({ filters });
+    this.sortComponent = new SortView({ sortOptions });
+    this.eventListComponent = new EventListView();
+    this.emptyListComponent = new EmptyListView();
 
     render(this.filterComponent, this.filterContainer);
+
+    if (points.length === 0) {
+      render(this.emptyListComponent, this.container);
+
+      return;
+    }
+
     render(this.sortComponent, this.container);
     render(this.eventListComponent, this.container);
 

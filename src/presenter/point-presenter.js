@@ -109,7 +109,7 @@ export default class PointPresenter {
     if (!formData) {
       return;
     }
-    
+
     this.#onDataChange(UserAction.UPDATE_POINT, formData.point);
   };
 

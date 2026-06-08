@@ -194,7 +194,7 @@ export default class TripPresenter {
     render(this.sortComponent, this.container);
 
     this.eventListComponent = new EventListView();
-  
+
     render(this.eventListComponent, this.container);
 
     if (this.#isCreationFormOpen) {

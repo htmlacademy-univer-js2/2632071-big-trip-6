@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import SortView from '../view/sort-view.js';
 import EventListView from '../view/event-list-view.js';
 import EmptyListView from '../view/empty-list-view.js';
@@ -6,6 +5,7 @@ import CreationFormView from '../view/creation-form-view.js';
 import PointPresenter from './point-presenter.js';
 import UserAction from './user-action.js';
 import { RenderPosition, render } from '../render.js';
+import TripInfoView from '../view/trip-info-view.js';
 
 const SortType = {
   DAY: 'day',
@@ -37,19 +37,16 @@ function sortByPrice(firstPoint, secondPoint) {
   return secondPoint.basePrice - firstPoint.basePrice;
 }
 
-function createDefaultPoint(pointTypes, destinations) {
-  const defaultDestination = destinations[0] ?? null;
+function createDefaultPoint(pointTypes) {
   const defaultType = pointTypes.includes('flight') ? 'flight' : (pointTypes[0] ?? 'flight');
-  const startDate = dayjs();
-  const endDate = startDate.add(1, 'hour');
 
   return {
     id: `new-point-${Date.now()}`,
     type: defaultType,
-    destinationId: defaultDestination?.id ?? '',
+    destinationId: '',
     offerIds: [],
-    dateFrom: startDate.toISOString(),
-    dateTo: endDate.toISOString(),
+    dateFrom: '',
+    dateTo: '',
     basePrice: 0,
     isFavorite: false,
   };
@@ -62,6 +59,8 @@ export default class TripPresenter {
   #destinations = [];
   #isCreationFormOpen = false;
   #creationFormComponent = null;
+  #creationKeyDownHandler = null;
+  #creationKeyDownListenerAttached = false;
   #newEventButtonListenerAttached = false;
 
   constructor({ container, model, filterModel, filterPresenter }) {
@@ -70,6 +69,9 @@ export default class TripPresenter {
     this.filterModel = filterModel;
     this.filterPresenter = filterPresenter;
     this.newEventButton = document.querySelector('.trip-main__event-add-btn');
+    this.tripMainContainer = document.querySelector('.trip-main');
+    this.tripInfoComponent = null;
+    this.#creationKeyDownHandler = this.#handleCreationFormKeyDown;
   }
 
   init() {
@@ -130,6 +132,7 @@ export default class TripPresenter {
     this.filterModel.setFilter('everything');
     this.#currentSortType = SortType.DAY;
     this.#isCreationFormOpen = true;
+    this.newEventButton.disabled = true;
     this.#resetPointPresenters();
     this.#renderBoard();
     this.filterPresenter.init();
@@ -156,18 +159,31 @@ export default class TripPresenter {
   #handleCreationFormReset = (event) => {
     event.preventDefault();
     this.#isCreationFormOpen = false;
+    this.#closeCreationForm();
     this.#renderBoard();
   };
 
   #handleCreationFormRollupClick = () => {
     this.#isCreationFormOpen = false;
+    this.#closeCreationForm();
+    this.#renderBoard();
+  };
+
+  #handleCreationFormKeyDown = (event) => {
+    if (event.key !== 'Escape') {
+      return;
+    }
+
+    event.preventDefault();
+    this.#isCreationFormOpen = false;
+    this.#closeCreationForm();
     this.#renderBoard();
   };
 
   #renderBoard() {
     const currentFilter = this.filterModel.getFilter();
     const points = this.model.getPoints(currentFilter);
-
+    this.#updateTripInfo();
     this.#clearBoard();
 
     this.#pointTypes = this.model.getPointTypes();
@@ -204,9 +220,56 @@ export default class TripPresenter {
     this.#renderPoints(this.#getSortedPoints(points));
   }
 
+  #updateTripInfo() {
+    const allPoints = [...(this.model.points ?? this.model.getPoints?.('everything') ?? [])].sort((a, b) => new Date(a.dateFrom) - new Date(b.dateFrom));
+
+    const existingStatic = this.tripMainContainer?.querySelector('.trip-main__trip-info');
+
+    if (allPoints.length === 0) {
+      if (existingStatic) {
+        existingStatic.remove();
+      }
+
+      this.tripInfoComponent = null;
+
+      return;
+    }
+
+    const first = allPoints[0];
+    const last = allPoints[allPoints.length - 1];
+
+    const destinationNames = allPoints.map((point) => this.model.getDestinationById(point.destinationId)?.city ?? '').filter(Boolean);
+    const uniqueNames = Array.from(new Set(destinationNames));
+
+    let title = '';
+    if (uniqueNames.length <= 3) {
+      title = uniqueNames.join(' &mdash; ');
+    } else {
+      title = `${uniqueNames[0]} &mdash; ... &mdash; ${uniqueNames[uniqueNames.length - 1]}`;
+    }
+
+    const total = (this.model.points ?? []).reduce((sum, point) => {
+      const offers = this.model.getOffersByIds(point.offerIds ?? []);
+      const offersSum = offers.reduce((acc, o) => acc + (o.price ?? 0), 0);
+      return sum + (point.basePrice ?? 0) + offersSum;
+    }, 0);
+
+    const data = { title, startDate: first.dateFrom, endDate: last.dateTo, total };
+
+    if (this.tripInfoComponent) {
+      this.tripInfoComponent.update(data);
+    } else if (existingStatic) {
+      this.tripInfoComponent = new TripInfoView(data);
+      existingStatic.replaceWith(this.tripInfoComponent.getElement());
+    } else if (this.tripMainContainer) {
+      this.tripInfoComponent = new TripInfoView(data);
+      render(this.tripInfoComponent, this.tripMainContainer, RenderPosition.AFTERBEGIN);
+    }
+  }
+
   #renderCreationForm() {
     const creationPoint = createDefaultPoint(this.#pointTypes, this.#destinations);
-    const creationDestination = this.#destinations.find((destination) => destination.id === creationPoint.destinationId) ?? this.#destinations[0] ?? null;
+    const creationDestination = this.#destinations.find((destination) => destination.id === creationPoint.destinationId) ?? null;
 
     this.#creationFormComponent = new CreationFormView({
       point: creationPoint,
@@ -221,6 +284,11 @@ export default class TripPresenter {
     });
 
     render(this.#creationFormComponent, this.eventListComponent.getElement(), RenderPosition.AFTERBEGIN);
+
+    if (!this.#creationKeyDownListenerAttached) {
+      document.addEventListener('keydown', this.#creationKeyDownHandler);
+      this.#creationKeyDownListenerAttached = true;
+    }
   }
 
   #getSortedPoints(points) {
@@ -269,11 +337,18 @@ export default class TripPresenter {
   }
 
   #closeCreationForm() {
-    this.#isCreationFormOpen = false;
-
     if (this.#creationFormComponent) {
       this.#creationFormComponent.getElement().remove();
       this.#creationFormComponent = null;
+    }
+
+    if (this.#creationKeyDownListenerAttached) {
+      document.removeEventListener('keydown', this.#creationKeyDownHandler);
+      this.#creationKeyDownListenerAttached = false;
+    }
+
+    if (this.newEventButton) {
+      this.newEventButton.disabled = false;
     }
   }
 

@@ -51,8 +51,41 @@ function renderAvailableOffers(offers, selectedOfferIds, idPrefix) {
               </div>`).join('');
 }
 
-function renderOffersForType(offers, type, selectedOfferIds, idPrefix) {
-  return renderAvailableOffers(offers.filter((offer) => offer.type === type), selectedOfferIds, idPrefix);
+function hasDestinationDetails(destination) {
+  if (!destination) {
+    return false;
+  }
+
+  return Boolean(destination.description) || (destination.pictures?.length ?? 0) > 0;
+}
+
+function renderOffersSection(offers, type, selectedOfferIds, idPrefix) {
+  const availableOffers = offers.filter((offer) => offer.type === type);
+
+  if (availableOffers.length === 0) {
+    return '';
+  }
+
+  return `
+          <section class="event__section  event__section--offers">
+            <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+            <div class="event__available-offers">
+${renderAvailableOffers(availableOffers, selectedOfferIds, idPrefix)}
+            </div>
+          </section>`;
+}
+
+function renderDestinationSection(destination) {
+  if (!hasDestinationDetails(destination)) {
+    return '';
+  }
+
+  return `
+          <section class="event__section  event__section--destination">
+            <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+            <p class="event__destination-description">${destination?.description ?? ''}</p>
+${renderDestinationPhotos(destination)}
+          </section>`;
 }
 
 function renderDestinationPhotos(destination) {
@@ -135,17 +168,8 @@ ${renderDestinationOptions(destinations)}
           </button>
         </header>
         <section class="event__details">
-          <section class="event__section  event__section--offers">
-            <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-            <div class="event__available-offers">
-${renderOffersForType(offers, normalizedPoint.type, selectedOfferIds, formId)}
-            </div>
-          </section>
-          <section class="event__section  event__section--destination">
-            <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-            <p class="event__destination-description">${destination?.description ?? ''}</p>
-${renderDestinationPhotos(destination)}
-          </section>
+${renderOffersSection(offers, normalizedPoint.type, selectedOfferIds, formId)}
+${renderDestinationSection(destination)}
         </section>
       </form>
     </li>`);

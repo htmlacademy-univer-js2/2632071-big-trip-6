@@ -18,6 +18,7 @@ export default class CreationFormView extends AbstractStatefulView {
   #offerChangeHandler = null;
   #startDatepicker = null;
   #endDatepicker = null;
+  #priceInputHandler = null;
 
   constructor({ point, destination, destinations, offers, selectedOfferIds, pointTypes, onFormSubmit = () => {}, onFormReset = () => {}, onRollupClick = () => {} } = {}) {
     super();
@@ -33,6 +34,7 @@ export default class CreationFormView extends AbstractStatefulView {
     this.#typeChangeHandler = this.#handleTypeChange;
     this.#destinationChangeHandler = this.#handleDestinationChange;
     this.#offerChangeHandler = this.#handleOfferChange;
+    this.#priceInputHandler = this.#handlePriceInput;
   }
 
   get template() {
@@ -54,6 +56,7 @@ export default class CreationFormView extends AbstractStatefulView {
     this._element.querySelector('form').addEventListener('reset', this.#resetHandler);
     this._element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
     this._element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
+    this._element.querySelector('.event__input--price').addEventListener('input', this.#priceInputHandler);
     this._element.querySelectorAll('.event__type-input').forEach((input) => input.addEventListener('change', this.#typeChangeHandler));
     this._element.querySelectorAll('.event__offer-checkbox').forEach((input) => input.addEventListener('change', this.#offerChangeHandler));
 
@@ -119,6 +122,15 @@ export default class CreationFormView extends AbstractStatefulView {
     });
   };
 
+  #handlePriceInput = (event) => {
+    const nextValue = event.target.value === '' ? 0 : Number(event.target.value);
+
+    this.point = {
+      ...this.point,
+      basePrice: Number.isNaN(nextValue) ? 0 : nextValue,
+    };
+  };
+
   #collectFormData() {
     const selectedTypeInput = this._element.querySelector('input[name="event-type"]:checked');
     const destinationInput = this._element.querySelector('.event__input--destination');
@@ -158,6 +170,12 @@ export default class CreationFormView extends AbstractStatefulView {
       enableTime: true,
       'time_24hr': true,
       allowInput: true,
+      onChange: ([selectedDate]) => {
+        this.point = {
+          ...this.point,
+          dateFrom: selectedDate?.toISOString() ?? '',
+        };
+      },
     });
 
     this.#endDatepicker = flatpickr(endDateInput, {
@@ -166,6 +184,12 @@ export default class CreationFormView extends AbstractStatefulView {
       enableTime: true,
       'time_24hr': true,
       allowInput: true,
+      onChange: ([selectedDate]) => {
+        this.point = {
+          ...this.point,
+          dateTo: selectedDate?.toISOString() ?? '',
+        };
+      },
     });
   }
 

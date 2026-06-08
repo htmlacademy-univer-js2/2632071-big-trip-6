@@ -114,7 +114,7 @@ export default class Model {
         label,
         count,
         isChecked: type === activeFilter,
-        isDisabled: type !== 'everything' && count === 0,
+        isDisabled: count === 0,
       };
     });
   }

@@ -16,7 +16,6 @@ const filterModel = new FilterModel();
 const tripPresenterRef = {
   current: null,
 };
-
 render(new LoadingView(), tripEventsContainer);
 
 model.init()
@@ -44,3 +43,4 @@ model.init()
     tripEventsContainer.innerHTML = '';
     render(new EmptyListView({ message: 'Failed to load latest route information' }), tripEventsContainer);
   });
+  

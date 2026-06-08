@@ -13,12 +13,36 @@ ${filters.map((filter) => `      <div class="trip-filters__filter">
 }
 
 export default class FilterView extends View {
-  constructor({ filters } = {}) {
+  #changeHandler = null;
+  #onFilterChange = null;
+  
+  constructor({ filters, onFilterChange = () => {} } = {}) {
     super();
     this.filters = filters ?? [];
+    this.#onFilterChange = onFilterChange;
+    this.#changeHandler = this.#handleChange;
   }
 
   get template() {
     return createFilterTemplate(this.filters);
   }
+
+  _restoreHandlers() {
+    this._element.querySelector('form').addEventListener('change', this.#changeHandler);
+  }
+
+  #handleChange = (event) => {
+    const filterInput = event.target.closest('.trip-filters__filter-input');
+
+    if (!filterInput || filterInput.disabled) {
+      return;
+    }
+
+    this.filters = this.filters.map((filter) => ({
+      ...filter,
+      isChecked: filter.type === filterInput.value,
+    }));
+
+    this.#onFilterChange(filterInput.value);
+  };
 }

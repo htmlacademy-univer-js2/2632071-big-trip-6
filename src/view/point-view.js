@@ -19,11 +19,33 @@ function formatDate(value, format) {
   return date.isValid() ? date.format(format) : '';
 }
 
+function formatDuration(point) {
+  if (!point?.dateFrom || !point?.dateTo) {
+    return '';
+  }
+
+  const totalMinutes = dayjs(point.dateTo).diff(dayjs(point.dateFrom), 'minute');
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes}M`;
+  }
+
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days === 0) {
+    return `${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+  }
+
+  return `${String(days).padStart(2, '0')}D ${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+}
+
 function createPointTemplate(point, destination, offers) {
   const pointDate = formatDate(point?.dateFrom, 'MMM DD').toUpperCase();
   const startTime = formatDate(point?.dateFrom, 'HH:mm');
   const endTime = formatDate(point?.dateTo, 'HH:mm');
-  const duration = point?.dateFrom && point?.dateTo && dayjs(point.dateTo).diff(dayjs(point.dateFrom), 'minute');
+  const duration = formatDuration(point);
   const favoriteClass = point?.isFavorite ? ' event__favorite-btn--active' : '';
   const selectedOffersMarkup = offers.map((offer) => `
           <li class="event__offer">
@@ -46,7 +68,7 @@ function createPointTemplate(point, destination, offers) {
             &mdash;
             <time class="event__end-time" datetime="${point?.dateTo ?? ''}">${endTime}</time>
           </p>
-          <p class="event__duration">${Number.isFinite(duration) ? `${duration}M` : ''}</p>
+          <p class="event__duration">${duration}</p>
         </div>
         <p class="event__price">
           &euro;&nbsp;<span class="event__price-value">${point?.basePrice ?? ''}</span>

@@ -57,17 +57,11 @@ function createDefaultPoint(pointTypes, destinations) {
 
 export default class TripPresenter {
   #pointPresenters = new Map();
-
   #currentSortType = SortType.DAY;
-
   #pointTypes = [];
-
   #destinations = [];
-
   #isCreationFormOpen = false;
-
   #creationFormComponent = null;
-
   #newEventButtonListenerAttached = false;
 
   constructor({ container, model, filterModel, filterPresenter }) {
@@ -97,8 +91,13 @@ export default class TripPresenter {
   #handlePointDataChange = (actionType, update) => {
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.model.updatePoint(update);
-        break;
+        return this.model.updatePoint(update)
+          .then(() => {
+            this.#isCreationFormOpen = false;
+            this.#renderBoard();
+            this.filterPresenter.init();
+          })
+          .catch(() => {});
       case UserAction.DELETE_POINT:
         this.model.deletePoint(update.id);
         break;
@@ -195,7 +194,7 @@ export default class TripPresenter {
     render(this.sortComponent, this.container);
 
     this.eventListComponent = new EventListView();
-    
+  
     render(this.eventListComponent, this.container);
 
     if (this.#isCreationFormOpen) {

@@ -15,7 +15,7 @@ ${filters.map((filter) => `      <div class="trip-filters__filter">
 export default class FilterView extends View {
   #changeHandler = null;
   #onFilterChange = null;
-  
+
   constructor({ filters, onFilterChange = () => {} } = {}) {
     super();
     this.filters = filters ?? [];

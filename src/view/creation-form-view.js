@@ -3,8 +3,13 @@ import { createPointFormTemplate } from './point-form-template.js';
 import flatpickr from 'flatpickr';
 
 const DATE_FORMAT = 'd/m/y H:i';
+const FormUiState = {
+  IDLE: 'idle',
+  SAVING: 'saving',
+};
 
 export default class CreationFormView extends AbstractStatefulView {
+  #uiState = FormUiState.IDLE;
   #submitHandler = null;
   #resetHandler = null;
   #rollupClickHandler = null;
@@ -67,6 +72,16 @@ export default class CreationFormView extends AbstractStatefulView {
   removeElement() {
     this.#destroyDatepickers();
     super.removeElement();
+  }
+
+  setSaving() {
+    this.#setUiState(FormUiState.SAVING);
+  }
+
+  setAborting() {
+    this.shake(() => {
+      this.#setUiState(FormUiState.IDLE);
+    });
   }
 
   #handleTypeChange = (event) => {
@@ -159,5 +174,19 @@ export default class CreationFormView extends AbstractStatefulView {
     this.#endDatepicker?.destroy();
     this.#startDatepicker = null;
     this.#endDatepicker = null;
+  }
+
+  #setUiState(uiState) {
+    this.#uiState = uiState;
+
+    const formElement = this.getElement().querySelector('form');
+    const saveButton = formElement.querySelector('.event__save-btn');
+    const isDisabled = this.#uiState !== FormUiState.IDLE;
+
+    formElement.querySelectorAll('input, button').forEach((control) => {
+      control.disabled = isDisabled;
+    });
+
+    saveButton.textContent = this.#uiState === FormUiState.SAVING ? 'Saving...' : 'Save';
   }
 }

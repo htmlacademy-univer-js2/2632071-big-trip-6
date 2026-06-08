@@ -1,6 +1,7 @@
 import PointView from '../view/point-view.js';
 import PointEditView from '../view/point-edit-view.js';
 import { render } from '../render.js';
+import UserAction from './user-action.js';
 
 const Mode = {
   DEFAULT: 'DEFAULT',
@@ -52,6 +53,7 @@ export default class PointPresenter {
       selectedOfferIds: this.#point.offerIds,
       pointTypes: this.#pointTypes,
       onFormSubmit: this.#handleFormSubmit,
+      onFormDelete: this.#handleFormDelete,
       onRollupClick: this.#handleFormRollupClick,
     });
 
@@ -97,12 +99,25 @@ export default class PointPresenter {
       isFavorite: !this.#point.isFavorite,
     };
 
-    this.#onDataChange(updatedPoint);
+    this.#onDataChange(UserAction.UPDATE_POINT, updatedPoint);
   };
 
   #handleFormSubmit = (event) => {
     event.preventDefault();
+    const formData = this.#pointEditView.getFormData();
+
+    if (!formData) {
+      return;
+    }
+
     this.#closeEditForm();
+    this.#onDataChange(UserAction.UPDATE_POINT, formData.point);
+  };
+
+  #handleFormDelete = (event) => {
+    event.preventDefault();
+    this.#closeEditForm();
+    this.#onDataChange(UserAction.DELETE_POINT, this.#point);
   };
 
   #handleFormRollupClick = () => {

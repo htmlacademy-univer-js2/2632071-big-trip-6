@@ -126,7 +126,7 @@ ${renderDestinationOptions(destinations)}
               <span class="visually-hidden">Price</span>
               &euro;
             </label>
-            <input class="event__input  event__input--price" id="event-price-${formId}" type="text" name="event-price" value="${normalizedPoint.basePrice}">
+            <input class="event__input  event__input--price" id="event-price-${formId}" type="number" name="event-price" min="0" step="1" inputmode="numeric" value="${normalizedPoint.basePrice}">
           </div>
           <button class="event__save-btn  btn  btn--blue" type="submit">${submitLabel}</button>
           <button class="event__reset-btn" type="reset">${resetLabel}</button>

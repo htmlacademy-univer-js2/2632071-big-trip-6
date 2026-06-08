@@ -8,6 +8,8 @@ const FILTER_TYPES = [
   { type: 'past', label: 'Past' },
 ];
 
+const DEFAULT_FILTER = 'everything';
+
 function getFilterCount(points, type) {
   if (type === 'everything') {
     return points.length;
@@ -30,7 +32,25 @@ function getFilterCount(points, type) {
   }).length;
 }
 
+function getFilteredPoints(points, filter) {
+  if (filter === 'future') {
+    return points.filter((point) => dayjs(point.dateFrom).isAfter(dayjs(), 'day'));
+  }
+
+  if (filter === 'present') {
+    return points.filter((point) => dayjs(point.dateFrom).isSame(dayjs(), 'day'));
+  }
+
+  if (filter === 'past') {
+    return points.filter((point) => dayjs(point.dateFrom).isBefore(dayjs(), 'day'));
+  }
+
+  return points;
+}
+
 export default class Model {
+  #observers = [];
+
   constructor() {
     const mockData = createMockData();
 
@@ -40,8 +60,16 @@ export default class Model {
     this.points = mockData.points;
   }
 
-  getPoints() {
-    return this.points;
+  addObserver(observer) {
+    this.#observers.push(observer);
+  }
+
+  #notify() {
+    this.#observers.forEach((observer) => observer());
+  }
+
+  getPoints(filter = DEFAULT_FILTER) {
+    return getFilteredPoints(this.points, filter);
   }
 
   getPointTypes() {
@@ -56,7 +84,7 @@ export default class Model {
     return this.offers;
   }
 
-  getFilters() {
+  getFilters(activeFilter = DEFAULT_FILTER) {
     return FILTER_TYPES.map(({ type, label }) => {
       const count = getFilterCount(this.points, type);
 
@@ -64,7 +92,7 @@ export default class Model {
         type,
         label,
         count,
-        isChecked: type === 'everything',
+        isChecked: type === activeFilter,
         isDisabled: type !== 'everything' && count === 0,
       };
     });
@@ -74,8 +102,21 @@ export default class Model {
     return this.points.find((point) => point.id === pointId) ?? null;
   }
 
+  setPoints(points) {
+    this.points = points;
+    this.#notify();
+  }
+
   updatePoint(updatedPoint) {
-    this.points = this.points.map((point) => (point.id === updatedPoint.id ? updatedPoint : point));
+    this.setPoints(this.points.map((point) => (point.id === updatedPoint.id ? updatedPoint : point)));
+  }
+
+  addPoint(newPoint) {
+    this.setPoints([newPoint, ...this.points]);
+  }
+
+  deletePoint(pointId) {
+    this.setPoints(this.points.filter((point) => point.id !== pointId));
   }
 
   getDestinationById(destinationId) {

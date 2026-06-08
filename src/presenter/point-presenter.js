@@ -112,7 +112,6 @@ export default class PointPresenter {
     }
 
     this.#pointEditView.setSaving();
-
     try {
       await this.#onDataChange(UserAction.UPDATE_POINT, formData.point);
     } catch {
@@ -121,10 +120,9 @@ export default class PointPresenter {
   };
 
   #handleFormDelete = async (event) => {
-    event?.preventDefault?.();
+    event.preventDefault();
 
     this.#pointEditView.setDeleting();
-
     try {
       await this.#onDataChange(UserAction.DELETE_POINT, this.#point);
     } catch {

@@ -215,7 +215,6 @@ export default class PointEditView extends AbstractStatefulView {
 
   #setUiState(uiState) {
     this.#uiState = uiState;
-
     const formElement = this.getElement().querySelector('form');
     const saveButton = formElement.querySelector('.event__save-btn');
     const deleteButton = formElement.querySelector('.event__reset-btn');

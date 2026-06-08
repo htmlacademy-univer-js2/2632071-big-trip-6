@@ -141,9 +141,7 @@ export default class Model {
       id: undefined,
     }));
     const adaptedPoint = adaptPointFromServer(response);
-
     this.setPoints([adaptedPoint, ...this.points]);
-
     return adaptedPoint;
   }
 

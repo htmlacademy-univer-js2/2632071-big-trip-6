@@ -135,11 +135,18 @@ export default class Model {
     return adaptedPoint;
   }
 
-  addPoint(newPoint) {
-    this.setPoints([newPoint, ...this.points]);
+  async addPoint(newPoint) {
+    const response = await this.#apiService.createPoint(adaptPointToServer({
+      ...newPoint,
+      id: undefined,
+    }));
+    const adaptedPoint = adaptPointFromServer(response);
+    this.setPoints([adaptedPoint, ...this.points]);
+    return adaptedPoint;
   }
 
-  deletePoint(pointId) {
+  async deletePoint(pointId) {
+    await this.#apiService.deletePoint(pointId);
     this.setPoints(this.points.filter((point) => point.id !== pointId));
   }
 

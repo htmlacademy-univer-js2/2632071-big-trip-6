@@ -43,4 +43,3 @@ model.init()
     tripEventsContainer.innerHTML = '';
     render(new EmptyListView({ message: 'Failed to load latest route information' }), tripEventsContainer);
   });
-  

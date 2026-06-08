@@ -114,7 +114,7 @@ export default class Model {
         label,
         count,
         isChecked: type === activeFilter,
-        isDisabled: type !== 'everything' && count === 0,
+        isDisabled: count === 0,
       };
     });
   }
@@ -135,11 +135,20 @@ export default class Model {
     return adaptedPoint;
   }
 
-  addPoint(newPoint) {
-    this.setPoints([newPoint, ...this.points]);
+  async addPoint(newPoint) {
+    const response = await this.#apiService.createPoint(adaptPointToServer({
+      ...newPoint,
+      id: undefined,
+    }));
+    const adaptedPoint = adaptPointFromServer(response);
+
+    this.setPoints([adaptedPoint, ...this.points]);
+
+    return adaptedPoint;
   }
 
-  deletePoint(pointId) {
+  async deletePoint(pointId) {
+    await this.#apiService.deletePoint(pointId);
     this.setPoints(this.points.filter((point) => point.id !== pointId));
   }
 

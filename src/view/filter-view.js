@@ -28,11 +28,14 @@ export default class FilterView extends View {
   }
 
   _restoreHandlers() {
-    this._element.querySelector('form').addEventListener('change', this.#changeHandler);
+    this._element.addEventListener('click', this.#changeHandler);
   }
 
   #handleChange = (event) => {
-    const filterInput = event.target.closest('.trip-filters__filter-input');
+    const filterLabel = event.target.closest('.trip-filters__filter-label');
+    const filterInput = filterLabel
+      ? this._element.querySelector(`#${filterLabel.htmlFor}`)
+      : event.target.closest('.trip-filters__filter-input');
 
     if (!filterInput || filterInput.disabled) {
       return;

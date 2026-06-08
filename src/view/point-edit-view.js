@@ -3,16 +3,23 @@ import { createPointFormTemplate } from './point-form-template.js';
 import flatpickr from 'flatpickr';
 
 const DATE_FORMAT = 'd/m/y H:i';
+const FormUiState = {
+  IDLE: 'idle',
+  SAVING: 'saving',
+  DELETING: 'deleting',
+};
 
 export default class PointEditView extends AbstractStatefulView {
+  #uiState = FormUiState.IDLE;
   #submitHandler = null;
+  #deleteHandler = null;
   #rollupClickHandler = null;
   #typeChangeHandler = null;
   #destinationChangeHandler = null;
   #offerChangeHandler = null;
   #startDatepicker = null;
   #endDatepicker = null;
-  #deleteHandler = null;
+  #priceInputHandler = null;
 
   constructor({ point, destination, destinations, offers, selectedOfferIds, pointTypes, onFormSubmit = () => {}, onFormDelete = () => {}, onRollupClick = () => {} } = {}) {
     super();
@@ -28,6 +35,7 @@ export default class PointEditView extends AbstractStatefulView {
     this.#typeChangeHandler = this.#handleTypeChange;
     this.#destinationChangeHandler = this.#handleDestinationChange;
     this.#offerChangeHandler = this.#handleOfferChange;
+    this.#priceInputHandler = this.#handlePriceInput;
   }
 
   get template() {
@@ -49,6 +57,7 @@ export default class PointEditView extends AbstractStatefulView {
     this._element.querySelector('.event__reset-btn').addEventListener('click', this.#handleDeleteClick);
     this._element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
     this._element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
+    this._element.querySelector('.event__input--price').addEventListener('input', this.#priceInputHandler);
     this._element.querySelectorAll('.event__type-input').forEach((input) => input.addEventListener('change', this.#typeChangeHandler));
     this._element.querySelectorAll('.event__offer-checkbox').forEach((input) => input.addEventListener('change', this.#offerChangeHandler));
 
@@ -67,6 +76,20 @@ export default class PointEditView extends AbstractStatefulView {
   removeElement() {
     this.#destroyDatepickers();
     super.removeElement();
+  }
+
+  setSaving() {
+    this.#setUiState(FormUiState.SAVING);
+  }
+
+  setDeleting() {
+    this.#setUiState(FormUiState.DELETING);
+  }
+
+  setAborting() {
+    this.shake(() => {
+      this.#setUiState(FormUiState.IDLE);
+    });
   }
 
   #handleTypeChange = (event) => {
@@ -106,9 +129,18 @@ export default class PointEditView extends AbstractStatefulView {
     });
   };
 
+  #handlePriceInput = (event) => {
+    const nextValue = event.target.value === '' ? 0 : Number(event.target.value);
+
+    this.point = {
+      ...this.point,
+      basePrice: Number.isNaN(nextValue) ? 0 : nextValue,
+    };
+  };
+
   #handleDeleteClick = (event) => {
     event.preventDefault();
-    this.#deleteHandler();
+    this.#deleteHandler(event);
   };
 
   #collectFormData() {
@@ -151,6 +183,12 @@ export default class PointEditView extends AbstractStatefulView {
       enableTime: true,
       'time_24hr': true,
       allowInput: true,
+      onChange: ([selectedDate]) => {
+        this.point = {
+          ...this.point,
+          dateFrom: selectedDate?.toISOString() ?? '',
+        };
+      },
     });
 
     this.#endDatepicker = flatpickr(endDateInput, {
@@ -159,6 +197,12 @@ export default class PointEditView extends AbstractStatefulView {
       enableTime: true,
       'time_24hr': true,
       allowInput: true,
+      onChange: ([selectedDate]) => {
+        this.point = {
+          ...this.point,
+          dateTo: selectedDate?.toISOString() ?? '',
+        };
+      },
     });
   }
 
@@ -167,5 +211,21 @@ export default class PointEditView extends AbstractStatefulView {
     this.#endDatepicker?.destroy();
     this.#startDatepicker = null;
     this.#endDatepicker = null;
+  }
+
+  #setUiState(uiState) {
+    this.#uiState = uiState;
+
+    const formElement = this.getElement().querySelector('form');
+    const saveButton = formElement.querySelector('.event__save-btn');
+    const deleteButton = formElement.querySelector('.event__reset-btn');
+    const isDisabled = this.#uiState !== FormUiState.IDLE;
+
+    formElement.querySelectorAll('input, button').forEach((control) => {
+      control.disabled = isDisabled;
+    });
+
+    saveButton.textContent = this.#uiState === FormUiState.SAVING ? 'Saving...' : 'Save';
+    deleteButton.textContent = this.#uiState === FormUiState.DELETING ? 'Deleting...' : 'Delete';
   }
 }

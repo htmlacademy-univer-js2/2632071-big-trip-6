@@ -1,4 +1,4 @@
-import View from './view.js';
+import AbstractStatefulView from './abstract-stateful-view.js';
 
 function createFilterTemplate(filters) {
   return (
@@ -12,7 +12,7 @@ ${filters.map((filter) => `      <div class="trip-filters__filter">
   );
 }
 
-export default class FilterView extends View {
+export default class FilterView extends AbstractStatefulView {
   #changeHandler = null;
   #onFilterChange = null;
 

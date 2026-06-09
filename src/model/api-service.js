@@ -53,15 +53,14 @@ export default class ApiService {
   }
 
   async #load(path, options = {}) {
-    const response = await fetch(new URL(path, this.#endPoint), {
-      method: HTTP_METHOD.GET,
-      headers: {
-        Authorization: `Basic ${this.#authorization}`,
-        ...options.headers,
-      },
-      ...options,
-    });
-
+  const response = await fetch(new URL(path, this.#endPoint), {
+    method: HTTP_METHOD.GET,
+    ...options,
+    headers: {
+      Authorization: `Basic ${this.#authorization}`,
+      ...options.headers,
+    },
+  });
     if (!response.ok) {
       throw new Error(`Request failed: ${response.status} ${response.statusText}`);
     }

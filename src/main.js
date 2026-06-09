@@ -1,3 +1,4 @@
+import 'flatpickr/dist/flatpickr.min.css';
 import Model from './model/model.js';
 import FilterModel from './model/filter-model.js';
 import ApiService from './model/api-service.js';

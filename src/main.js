@@ -1,3 +1,4 @@
+import 'flatpickr/dist/flatpickr.min.css';
 import Model from './model/model.js';
 import FilterModel from './model/filter-model.js';
 import ApiService from './model/api-service.js';
@@ -43,4 +44,3 @@ model.init()
     tripEventsContainer.innerHTML = '';
     render(new EmptyListView({ message: 'Failed to load latest route information' }), tripEventsContainer);
   });
-  
